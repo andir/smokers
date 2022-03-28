@@ -87,6 +87,11 @@ jobs:
           command: test
           args: --verbose --all
 
+      - name: run hello-world example
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: -- examples/hello-world.yaml
 
   cargo-deny:
     name: Cargo deny

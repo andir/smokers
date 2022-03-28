@@ -1,0 +1,12 @@
+# The command that should be executed.
+# Can be provided as a single command string if it doesn't require any arguments.
+command:
+  - sh
+  - -c
+  - "echo hello world && exit 1"
+
+# (optional) stdout text that is expected
+stdout: "hello world\n"
+
+# (optional) the exit code of the process
+exit-code: 1
