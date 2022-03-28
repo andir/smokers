@@ -10,4 +10,3 @@ serde_yaml = "0.8"
 serde = { version = "1", features = [ "derive" ] }
 thiserror = "1"
 clap = { version = "3", features = [ "derive", "cargo" ] }
-treediff = "4"
