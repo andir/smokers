@@ -86,3 +86,15 @@ jobs:
         with:
           command: test
           args: --verbose --all
+
+
+  cargo-deny:
+    name: Cargo deny
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Rust toolcnain
+        uses: actions/checkout@v2
+        with:
+          toolchain: stable
+          override: true
+      - uses: EmbarkStudios/cargo-deny-action@v1
