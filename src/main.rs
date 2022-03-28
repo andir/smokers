@@ -55,32 +55,44 @@ fn run(
         .spawn()?;
 
     let output = process.wait_with_output()?;
+    let output_stdout = String::from_utf8_lossy(&output.stdout);
+    let output_status_code = output.status.code();
 
-    let failed = match output.status.code() {
-        Some(code) if code == config.exit_code => {
-    	    false
-        }
-        Some(_) | None /* None = killed by signal */ => {
-            writeln!(log_file, "Wrong or unexpected exit code {:?}. Expected {:?}", output.status.code(), config.exit_code)?;
-    	    true
-        }
+    let exit_code_failed = match (output_status_code, config.exit_code) {
+        (Some(code), expected_exit_code) => code != expected_exit_code,
+        (None, _) => true, // killed by signal, currently handled as failure
     };
 
-    let failed = failed
-        | if let Some(expected_stdout) = &config.stdout {
-            let output_string = String::from_utf8_lossy(&output.stdout);
-            if !output_string.eq(expected_stdout) {
-                writeln!(log_file, "Got unexpected stdout output.")?;
-                writeln!(log_file, "expected: {:?}", expected_stdout)?;
-                writeln!(log_file, "got     : {:?}", output_string)?;
-                true
-            } else {
-                false
-            }
-        } else {
-            false
-        };
+    let stdout_failed = match (&config.stdout, &output_stdout) {
+        (Some(expected_stdout), s) => s != expected_stdout,
+        (None, _) => false,
+    };
 
+    if exit_code_failed {
+        match output_status_code {
+            None => writeln!(
+                log_file,
+                "The process died due to a signal. Expected it to exit with status code {}",
+                config.exit_code
+            )?,
+            Some(exit_code) => writeln!(
+                log_file,
+                "Unexpected exit code {}, expected {}",
+                exit_code, config.exit_code
+            )?,
+        }
+    }
+
+    if stdout_failed {
+        writeln!(log_file, "stdout:          {:?}", output_stdout)?;
+        if let Some(expected_stdout) = &config.stdout {
+            writeln!(log_file, "expected stdout: {:?}", expected_stdout)?;
+        } else {
+            writeln!(log_file, "expected no stdout.")?;
+        }
+    }
+
+    let failed = stdout_failed | exit_code_failed;
     if failed {
         writeln!(
             log_file,
